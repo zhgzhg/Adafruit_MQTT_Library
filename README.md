@@ -1,8 +1,12 @@
-# Adafruit MQTT Library [![Build Status](https://github.com/adafruit/Adafruit_MQTT_Library/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_MQTT_Library/actions)
+# Adafruit MQTT Library
 
-Arduino library for MQTT support, including access to Adafruit IO.  Works with
+Modified Arduino library for MQTT supporting __larger data transfers__, including access to Adafruit IO.  Works with
 the Adafruit FONA, Arduino Yun, ESP8266 Arduino platforms, and anything that supports
 Arduino's Client interface (like Ethernet shield).
+
+__This mod includes externally suppliable buffers via callback which can be greater than 65535 bytes.
+For more info check the Adafruit_MQTT or Adafruit_MQTT_Client constructors.
+The feature is active by default for ESP8266 and ESP32.__
 
 See included examples for how to use the library to access an MQTT service to
 publish and subscribe to feeds.  Note that this does not support the full MQTT
@@ -32,7 +36,8 @@ Atmega328 @ 16MHz  |             |             |     X       |
 Atmega328 @ 12MHz  |             |             |     X       | 
 Atmega32u4 @ 16MHz |             |             |     X       | 
 Atmega32u4 @ 8MHz  |             |             |     X       | 
-ESP8266            |             |             |     X       | 
+ESP8266            |             |             |     X       | Active ext buffer via callback
+ESP32              |      X      |             |             | Active ext buffer via callback
 Atmega2560 @ 16MHz |             |             |     X       | 
 ATSAM3X8E          |             |             |     X       | 
 ATSAM21D           |             |             |     X       | 
@@ -40,7 +45,7 @@ ATSAMD51J20        |             |             |     X       |
 ATtiny85 @ 16MHz   |             |             |     X       | 
 ATtiny85 @ 8MHz    |             |             |     X       | 
 Intel Curie @ 32MHz |            |             |     X       | 
-STM32F2            |             |             |     X       | 
+STM32F2            |             |             |     X       |
 
   * ATmega328 @ 16MHz : Arduino UNO, Adafruit Pro Trinket 5V, Adafruit Metro 328, Adafruit Metro Mini
   * ATmega328 @ 12MHz : Adafruit Pro Trinket 3V
