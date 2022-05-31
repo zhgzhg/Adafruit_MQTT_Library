@@ -34,21 +34,36 @@
 class Adafruit_MQTT_Client : public Adafruit_MQTT {
 public:
   Adafruit_MQTT_Client(Client *client, const char *server, uint16_t port,
-                       const char *cid, const char *user, const char *pass)
-      : Adafruit_MQTT(server, port, cid, user, pass), client(client) {}
+                       const char *cid, const char *user, const char *pass
+                       #if defined(EXT_MQTT_BUFFER)
+                       , supplyBufferPtr supplyBufferFunc
+                       #endif
+                       )
+      : Adafruit_MQTT(server, port, cid, user, pass
+                      #if defined(EXT_MQTT_BUFFER)
+                      , supplyBufferFunc
+                      #endif
+                      ), client(client) {}
 
   Adafruit_MQTT_Client(Client *client, const char *server, uint16_t port,
+                       #if defined(EXT_MQTT_BUFFER)
+                       supplyBufferPtr supplyBufferFunc,
+                       #endif
                        const char *user = "", const char *pass = "")
-      : Adafruit_MQTT(server, port, user, pass), client(client) {}
+      : Adafruit_MQTT(server, port,
+                      #if defined(EXT_MQTT_BUFFER)
+                      supplyBufferFunc,
+                      #endif
+                      user, pass), client(client) {}
 
   bool connected() override;
 
 protected:
   bool connectServer() override;
   bool disconnectServer() override;
-  uint16_t readPacket(uint8_t *buffer, uint16_t maxlen,
+  uint32_t readPacket(uint8_t *buffer, uint32_t maxlen,
                       int16_t timeout) override;
-  bool sendPacket(uint8_t *buffer, uint16_t len) override;
+  bool sendPacket(uint8_t *buffer, uint32_t len) override;
 
 private:
   Client *client;

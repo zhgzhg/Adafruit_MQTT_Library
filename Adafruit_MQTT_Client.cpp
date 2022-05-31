@@ -23,7 +23,15 @@
 
 bool Adafruit_MQTT_Client::connectServer() {
   // Grab server name from flash and copy to buffer for name resolution.
-  memset(buffer, 0, sizeof(buffer));
+
+  uint32_t maxBufferSz = MAXBUFFERSIZE;
+  #if defined(EXT_MQTT_BUFFER)
+  this->supplyBufferFunc((uint8_t)MQTT_OP::CONNECT, &this->buffer, &maxBufferSz);
+  #else
+  this->buffer = this->_buffer;
+  #endif
+
+  memset(buffer, 0, maxBufferSz);
   strcpy((char *)buffer, servername);
   DEBUG_PRINT(F("Connecting to: "));
   DEBUG_PRINTLN((char *)buffer);
@@ -48,11 +56,11 @@ bool Adafruit_MQTT_Client::connected() {
   return client->connected();
 }
 
-uint16_t Adafruit_MQTT_Client::readPacket(uint8_t *buffer, uint16_t maxlen,
+uint32_t Adafruit_MQTT_Client::readPacket(uint8_t *buffer, uint32_t maxlen,
                                           int16_t timeout) {
   /* Read data until either the connection is closed, or the idle timeout is
    * reached. */
-  uint16_t len = 0;
+  uint32_t len = 0;
   int16_t t = timeout;
 
   if (maxlen == 0) { // handle zero-length packets
@@ -81,9 +89,9 @@ uint16_t Adafruit_MQTT_Client::readPacket(uint8_t *buffer, uint16_t maxlen,
   return len;
 }
 
-bool Adafruit_MQTT_Client::sendPacket(uint8_t *buffer, uint16_t len) {
-  uint16_t ret = 0;
-  uint16_t offset = 0;
+bool Adafruit_MQTT_Client::sendPacket(uint8_t *buffer, uint32_t len) {
+  uint32_t ret = 0;
+  uint32_t offset = 0;
   while (len > 0) {
     if (client->connected()) {
       // send 250 bytes at most at a time, can adjust this later based on Client

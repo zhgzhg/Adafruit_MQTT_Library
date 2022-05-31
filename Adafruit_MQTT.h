@@ -23,6 +23,7 @@
 #define _ADAFRUIT_MQTT_H_
 
 #include "Arduino.h"
+#include <cstdint>
 
 #if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_STM32_FEATHER)
 #define strncpy_P(dest, src, len) strncpy((dest), (src), (len))
@@ -104,10 +105,22 @@
 // Adjust as necessary, in seconds.  Default to 5 minutes.
 #define MQTT_CONN_KEEPALIVE 300
 
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32) || \
+    defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+#define EXT_MQTT_BUFFER 1
+#endif
+
 // Largest full packet we're able to send.
 // Need to be able to store at least ~90 chars for a connect packet with full
 // 23 char client ID.
 #define MAXBUFFERSIZE (150)
+
+#if defined(EXT_MQTT_BUFFER)
+typedef void (*supplyBufferPtr)(uint8_t operation_type, uint8_t **buffer,
+                                uint32_t *max_buffer_sz);
+enum class MQTT_OP : uint8_t { CONNECT = 0, DISCONNECT, PUB, RECV, SUB, UNSUB, PING };
+#endif
+
 
 #define MQTT_CONN_USERNAMEFLAG 0x80
 #define MQTT_CONN_PASSWORDFLAG 0x40
@@ -134,22 +147,31 @@ typedef void (*SubscribeCallbackUInt32Type)(uint32_t);
 // returns a double
 typedef void (*SubscribeCallbackDoubleType)(double);
 // returns a chunk of raw data
-typedef void (*SubscribeCallbackBufferType)(char *str, uint16_t len);
+typedef void (*SubscribeCallbackBufferType)(char *str, uint32_t len);
 // returns an io data wrapper instance
 typedef void (AdafruitIO_MQTT::*SubscribeCallbackIOType)(char *str,
-                                                         uint16_t len);
+                                                         uint32_t len);
 
-extern void printBuffer(uint8_t *buffer, uint16_t len);
+extern void printBuffer(uint8_t *buffer, uint32_t len);
 
 class Adafruit_MQTT_Subscribe; // forward decl
 
 class Adafruit_MQTT {
 public:
   Adafruit_MQTT(const char *server, uint16_t port, const char *cid,
-                const char *user, const char *pass);
+                const char *user, const char *pass
+                #if defined(EXT_MQTT_BUFFER)
+                , supplyBufferPtr supplyBufferFunc
+                #endif
+                );
 
-  Adafruit_MQTT(const char *server, uint16_t port, const char *user = "",
+  Adafruit_MQTT(const char *server, uint16_t port,
+                #if defined(EXT_MQTT_BUFFER)
+                supplyBufferPtr supplyBufferFunc,
+                #endif
+                const char *user = "",
                 const char *pass = "");
+
   virtual ~Adafruit_MQTT() {}
 
   // Connect to the MQTT server.  Returns 0 on success, otherwise an error code
@@ -190,7 +212,7 @@ public:
   // Publish a message to a topic using the specified QoS level.  Returns true
   // if the message was published, false otherwise.
   bool publish(const char *topic, const char *payload, uint8_t qos = 0);
-  bool publish(const char *topic, uint8_t *payload, uint16_t bLen,
+  bool publish(const char *topic, uint8_t *payload, uint32_t bLen,
                uint8_t qos = 0);
 
   // Add a subscription to receive messages for a topic.  Returns true if the
@@ -211,7 +233,7 @@ public:
 
   // Handle any data coming in for subscriptions and fires them off to the
   // appropriate callback
-  Adafruit_MQTT_Subscribe *handleSubscriptionPacket(uint16_t len);
+  Adafruit_MQTT_Subscribe *handleSubscriptionPacket(uint32_t len);
 
   void processPackets(int16_t timeout);
 
@@ -229,19 +251,19 @@ protected:
   virtual bool disconnectServer() = 0; // Subclasses need to fill this in!
 
   // Send data to the server specified by the buffer and length of data.
-  virtual bool sendPacket(uint8_t *buffer, uint16_t len) = 0;
+  virtual bool sendPacket(uint8_t *buffer, uint32_t len) = 0;
 
   // Read MQTT packet from the server.  Will read up to maxlen bytes and store
   // the data in the provided buffer.  Waits up to the specified timeout (in
   // milliseconds) for data to be available.
-  virtual uint16_t readPacket(uint8_t *buffer, uint16_t maxlen,
+  virtual uint32_t readPacket(uint8_t *buffer, uint32_t maxlen,
                               int16_t timeout) = 0;
 
   // Read a full packet, keeping note of the correct length
-  uint16_t readFullPacket(uint8_t *buffer, uint16_t maxsize, uint16_t timeout);
+  uint32_t readFullPacket(uint8_t *buffer, uint32_t maxsize, uint16_t timeout);
   // Properly process packets until you get to one you want
-  uint16_t processPacketsUntil(uint8_t *buffer, uint8_t waitforpackettype,
-                               uint16_t timeout);
+  uint32_t processPacketsUntil(uint8_t *buffer, uint32_t maxBufferSz,
+                               uint8_t waitforpackettype, uint16_t timeout);
 
   // Shared state that subclasses can use:
   const char *servername;
@@ -254,7 +276,12 @@ protected:
   uint8_t will_qos;
   uint8_t will_retain;
   uint16_t keepAliveInterval;    // MQTT KeepAlive time interval, in seconds
-  uint8_t buffer[MAXBUFFERSIZE]; // one buffer, used for all incoming/outgoing
+  uint8_t *buffer;
+  #if defined(EXT_MQTT_BUFFER)
+    supplyBufferPtr supplyBufferFunc;
+  #else
+    uint8_t _buffer[MAXBUFFERSIZE]; // one buffer, used for all incoming/outgoing
+  #endif
   uint16_t packet_id_counter;
 
 private:
@@ -266,7 +293,7 @@ private:
   uint8_t connectPacket(uint8_t *packet);
   uint8_t disconnectPacket(uint8_t *packet);
   uint16_t publishPacket(uint8_t *packet, const char *topic, uint8_t *payload,
-                         uint16_t bLen, uint8_t qos, uint16_t maxPacketLen = 0);
+                         uint32_t bLen, uint8_t qos, uint32_t maxPacketLen = 0);
   uint8_t subscribePacket(uint8_t *packet, const char *topic, uint8_t qos);
   uint8_t unsubscribePacket(uint8_t *packet, const char *topic);
   uint8_t pingPacket(uint8_t *packet);
@@ -286,7 +313,7 @@ public:
               // This might be ignored and a higher precision value sent.
   bool publish(int32_t i);
   bool publish(uint32_t i);
-  bool publish(uint8_t *b, uint16_t bLen);
+  bool publish(uint8_t *b, uint32_t bLen);
 
 private:
   Adafruit_MQTT *mqtt;
@@ -311,7 +338,7 @@ public:
   uint8_t lastread[SUBSCRIPTIONDATALEN];
   // Number valid bytes in lastread. Limited to SUBSCRIPTIONDATALEN-1 to
   // ensure nul terminating lastread.
-  uint16_t datalen;
+  uint32_t datalen;
 
   SubscribeCallbackUInt32Type callback_uint32t;
   SubscribeCallbackDoubleType callback_double;
