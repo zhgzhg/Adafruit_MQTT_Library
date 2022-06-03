@@ -804,7 +804,7 @@ uint8_t Adafruit_MQTT::connectPacket(uint8_t *packet) {
 
 // as per
 // http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718040
-uint16_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
+uint32_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
                                       uint8_t *data, uint32_t bLen, uint8_t qos,
                                       uint32_t maxPacketLen) {
   uint8_t *p = packet;
@@ -835,10 +835,12 @@ uint16_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
   }
 
   len += bLen; // remaining len excludes header byte & length field
+  uint32_t lenCopy = len;
 
   // Now you can start generating the packet!
   p[0] = MQTT_CTRL_PUBLISH << 4 | qos << 1;
   p++;
+  lenCopy++;
 
   // fill in packet[1] last
   do {
@@ -850,6 +852,7 @@ uint16_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
     }
     p[0] = encodedByte;
     p++;
+    lenCopy++;
   } while (len > 0);
 
   // topic comes before packet identifier
@@ -870,7 +873,7 @@ uint16_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
   len = p - packet;
   DEBUG_PRINTLN(F("MQTT publish packet:"));
   DEBUG_PRINTBUFFER(buffer, len);
-  return len;
+  return lenCopy;
 }
 
 uint8_t Adafruit_MQTT::subscribePacket(uint8_t *packet, const char *topic,

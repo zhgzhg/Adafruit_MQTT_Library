@@ -96,7 +96,7 @@ bool Adafruit_MQTT_Client::sendPacket(uint8_t *buffer, uint32_t len) {
     if (client->connected()) {
       // send 250 bytes at most at a time, can adjust this later based on Client
 
-      uint16_t sendlen = len > 250 ? 250 : len;
+      uint32_t sendlen = len > 250 ? 250 : len;
       // Serial.print("Sending: "); Serial.println(sendlen);
       ret = client->write(buffer + offset, sendlen);
       DEBUG_PRINT(F("Client sendPacket returned: "));
