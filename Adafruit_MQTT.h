@@ -209,11 +209,13 @@ public:
   // Sets the KeepAlive Interval, in seconds.
   bool setKeepAliveInterval(uint16_t keepAlive);
 
-  // Publish a message to a topic using the specified QoS level.  Returns true
-  // if the message was published, false otherwise.
-  bool publish(const char *topic, const char *payload, uint8_t qos = 0);
+  // Publish a message to a topic using the specified QoS level which
+  // optinally can be retained. Returns true if the message was
+  // published, false otherwise.
+  bool publish(const char *topic, const char *payload, uint8_t qos = 0,
+               uint8_t retain = 0);
   bool publish(const char *topic, uint8_t *payload, uint32_t bLen,
-               uint8_t qos = 0);
+               uint8_t qos = 0, uint8_t retain = 0);
 
   // Add a subscription to receive messages for a topic.  Returns true if the
   // subscription could be added or was already present, false otherwise.
@@ -293,7 +295,8 @@ private:
   uint8_t connectPacket(uint8_t *packet);
   uint8_t disconnectPacket(uint8_t *packet);
   uint32_t publishPacket(uint8_t *packet, const char *topic, uint8_t *payload,
-                         uint32_t bLen, uint8_t qos, uint32_t maxPacketLen = 0);
+                         uint32_t bLen, uint8_t qos, uint8_t retain = 0,
+                         uint32_t maxPacketLen = 0);
   uint8_t subscribePacket(uint8_t *packet, const char *topic, uint8_t qos);
   uint8_t unsubscribePacket(uint8_t *packet, const char *topic);
   uint8_t pingPacket(uint8_t *packet);
@@ -303,22 +306,35 @@ private:
 class Adafruit_MQTT_Publish {
 public:
   Adafruit_MQTT_Publish(Adafruit_MQTT *mqttserver, const char *feed,
-                        uint8_t qos = 0);
+                        uint8_t qos = 0, uint8_t retain = 0);
 
   bool publish(const char *s);
+  bool publish(const char *s, uint8_t qos_override, uint8_t retain_override);
   bool publish(
       double f,
       uint8_t precision =
           2); // Precision controls the minimum number of digits after decimal.
               // This might be ignored and a higher precision value sent.
+  bool publish(
+      double f,
+      uint8_t precision, // Precision controls the minimum number of digits after decimal.
+                         // This might be ignored and a higher precision value sent.
+      uint8_t qos_override,
+      uint8_t retain_override);
+
   bool publish(int32_t i);
+  bool publish(int32_t i, uint8_t qos_override, uint8_t retain_override);
   bool publish(uint32_t i);
+  bool publish(uint32_t i, uint8_t qos_override, uint8_t retain_override);
   bool publish(uint8_t *b, uint32_t bLen);
+  bool publish(uint8_t *b, uint32_t bLen, uint8_t qos_override,
+               uint8_t retain_override);
 
 private:
   Adafruit_MQTT *mqtt;
   const char *topic;
   uint8_t qos;
+  uint8_t retain;
 };
 
 class Adafruit_MQTT_Subscribe {
