@@ -6,7 +6,11 @@ Arduino's Client interface (like Ethernet shield).
 
 __This mod includes externally suppliable buffers via callback which can be greater than 65535 bytes.
 For more info check the Adafruit_MQTT or Adafruit_MQTT_Client constructors.
-The feature is active by default for ESP8266 and ESP32.__
+The feature is active by default for ESP8266 and ESP32.
+
+In addition there's a more flexible support for QoS and retained messages.
+__
+
 
 See included examples for how to use the library to access an MQTT service to
 publish and subscribe to feeds.  Note that this does not support the full MQTT
