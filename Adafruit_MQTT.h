@@ -35,7 +35,7 @@
 #define ADAFRUIT_MQTT_VERSION_PATCH 0
 
 // Uncomment/comment to turn on/off debug output messages.
-//#define MQTT_DEBUG
+// #define MQTT_DEBUG
 // Uncomment/comment to turn on/off error output messages.
 #define MQTT_ERROR
 
@@ -213,9 +213,9 @@ public:
   // optinally can be retained. Returns true if the message was
   // published, false otherwise.
   bool publish(const char *topic, const char *payload, uint8_t qos = 0,
-               uint8_t retain = 0);
+               bool retain = false);
   bool publish(const char *topic, uint8_t *payload, uint32_t bLen,
-               uint8_t qos = 0, uint8_t retain = 0);
+               uint8_t qos = 0, bool retain = false);
 
   // Add a subscription to receive messages for a topic.  Returns true if the
   // subscription could be added or was already present, false otherwise.
@@ -236,6 +236,9 @@ public:
   // Handle any data coming in for subscriptions and fires them off to the
   // appropriate callback
   Adafruit_MQTT_Subscribe *handleSubscriptionPacket(uint32_t len);
+
+  // Execute a subscription packet's associated callback and mark as "read"
+  void processSubscriptionPacket(Adafruit_MQTT_Subscribe *sub);
 
   void processPackets(int16_t timeout);
 
@@ -295,8 +298,8 @@ private:
   uint8_t connectPacket(uint8_t *packet);
   uint8_t disconnectPacket(uint8_t *packet);
   uint32_t publishPacket(uint8_t *packet, const char *topic, uint8_t *payload,
-                         uint32_t bLen, uint8_t qos, uint8_t retain = 0,
-                         uint32_t maxPacketLen = 0);
+                         uint32_t bLen, uint8_t qos, uint32_t maxPacketLen = 0,
+                         bool retain = false);
   uint8_t subscribePacket(uint8_t *packet, const char *topic, uint8_t qos);
   uint8_t unsubscribePacket(uint8_t *packet, const char *topic);
   uint8_t pingPacket(uint8_t *packet);
@@ -306,10 +309,10 @@ private:
 class Adafruit_MQTT_Publish {
 public:
   Adafruit_MQTT_Publish(Adafruit_MQTT *mqttserver, const char *feed,
-                        uint8_t qos = 0, uint8_t retain = 0);
+                        uint8_t qos = 0, bool retain = 0);
 
   bool publish(const char *s);
-  bool publish(const char *s, uint8_t qos_override, uint8_t retain_override);
+  bool publish(const char *s, uint8_t qos_override, bool retain_override);
   bool publish(
       double f,
       uint8_t precision =
@@ -320,21 +323,21 @@ public:
       uint8_t precision, // Precision controls the minimum number of digits after decimal.
                          // This might be ignored and a higher precision value sent.
       uint8_t qos_override,
-      uint8_t retain_override);
+      bool retain_override);
 
   bool publish(int32_t i);
-  bool publish(int32_t i, uint8_t qos_override, uint8_t retain_override);
+  bool publish(int32_t i, uint8_t qos_override, bool retain_override);
   bool publish(uint32_t i);
-  bool publish(uint32_t i, uint8_t qos_override, uint8_t retain_override);
+  bool publish(uint32_t i, uint8_t qos_override, bool retain_override);
   bool publish(uint8_t *b, uint32_t bLen);
   bool publish(uint8_t *b, uint32_t bLen, uint8_t qos_override,
-               uint8_t retain_override);
+               bool retain_override);
 
 private:
   Adafruit_MQTT *mqtt;
   const char *topic;
   uint8_t qos;
-  uint8_t retain;
+  bool retain;
 };
 
 class Adafruit_MQTT_Subscribe {
