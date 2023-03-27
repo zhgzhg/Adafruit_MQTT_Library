@@ -37,22 +37,26 @@ public:
                        const char *cid, const char *user, const char *pass
                        #if defined(EXT_MQTT_BUFFER)
                        , supplyBufferPtr supplyBufferFunc
+                       , void* supplyBufferPtrBase
                        #endif
                        )
       : Adafruit_MQTT(server, port, cid, user, pass
                       #if defined(EXT_MQTT_BUFFER)
                       , supplyBufferFunc
+                      , supplyBufferPtrBase
                       #endif
                       ), client(client) {}
 
   Adafruit_MQTT_Client(Client *client, const char *server, uint16_t port,
                        #if defined(EXT_MQTT_BUFFER)
                        supplyBufferPtr supplyBufferFunc,
+                       void* supplyBufferPtrBase,
                        #endif
                        const char *user = "", const char *pass = "")
       : Adafruit_MQTT(server, port,
                       #if defined(EXT_MQTT_BUFFER)
                       supplyBufferFunc,
+                      supplyBufferPtrBase,
                       #endif
                       user, pass), client(client) {}
 
