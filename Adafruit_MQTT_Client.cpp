@@ -26,7 +26,8 @@ bool Adafruit_MQTT_Client::connectServer() {
 
   uint32_t maxBufferSz = MAXBUFFERSIZE;
   #if defined(EXT_MQTT_BUFFER)
-  this->supplyBufferFunc((uint8_t)MQTT_OP::CONNECT, &this->buffer, &maxBufferSz);
+  this->supplyBufferFunc(this->supplyBufferPtrBase,
+    (uint8_t)MQTT_OP::CONNECT, &this->buffer, &maxBufferSz);
   #else
   this->buffer = this->_buffer;
   #endif

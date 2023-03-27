@@ -119,6 +119,7 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
                              const char *user, const char *pass
                              #if defined(EXT_MQTT_BUFFER)
                              , supplyBufferPtr supplyBufferFunc
+                             , void* supplyBufferPtrBase
                              #endif
                              ) {
   servername = server;
@@ -127,6 +128,7 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
   username = user;
   password = pass;
   this->supplyBufferFunc = supplyBufferFunc;
+  this->supplyBufferPtrBase = supplyBufferPtrBase;
 
   // reset subscriptions
   for (uint8_t i = 0; i < MAXSUBSCRIPTIONS; i++) {
@@ -146,11 +148,13 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
 Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
                              #if defined(EXT_MQTT_BUFFER)
                              supplyBufferPtr supplyBufferFunc,
+                             void* supplyBufferPtrBase=nullptr,
                              #endif
                              const char *user, const char *pass) {
   servername = server;
   portnum = port;
   this->supplyBufferFunc = supplyBufferFunc;
+  this->supplyBufferPtrBase = supplyBufferPtrBase;
   clientid = "";
   username = user;
   password = pass;
@@ -178,7 +182,8 @@ int8_t Adafruit_MQTT::connect() {
   uint32_t maxBufferSz = MAXBUFFERSIZE;
   
   #if defined(EXT_MQTT_BUFFER)
-  this->supplyBufferFunc((uint8_t)MQTT_OP::CONNECT, &this->buffer, &maxBufferSz);
+  this->supplyBufferFunc(this->supplyBufferPtrBase,
+    (uint8_t)MQTT_OP::CONNECT, &this->buffer, &maxBufferSz);
   #else
   this->buffer = this->_buffer;
   #endif
@@ -395,7 +400,8 @@ bool Adafruit_MQTT::publish(const char *topic, uint8_t *data,
 
   #if defined(EXT_MQTT_BUFFER)
     uint32_t bufferMaxSz;
-    this->supplyBufferFunc((uint8_t) MQTT_OP::PUB, &this->buffer, &bufferMaxSz);
+    this->supplyBufferFunc(this->supplyBufferPtrBase,
+      (uint8_t) MQTT_OP::PUB, &this->buffer, &bufferMaxSz);
   #else
     uint32_t bufferMaxSz = sizeof(_buffer);
     this->buffer = _buffer;
@@ -494,7 +500,8 @@ bool Adafruit_MQTT::unsubscribe(Adafruit_MQTT_Subscribe *sub) {
   
   #if defined(EXT_MQTT_BUFFER)
     uint32_t bufferMaxSz;
-    this->supplyBufferFunc((uint8_t) MQTT_OP::PUB, &this->buffer, &bufferMaxSz);
+    this->supplyBufferFunc(this->supplyBufferPtrBase,
+      (uint8_t) MQTT_OP::PUB, &this->buffer, &bufferMaxSz);
   #else
     uint32_t bufferMaxSz = sizeof(_buffer);
     this->buffer = _buffer;
@@ -571,7 +578,8 @@ Adafruit_MQTT_Subscribe *Adafruit_MQTT::readSubscription(int16_t timeout) {
   if (!s) {
     #if defined(EXT_MQTT_BUFFER)
       uint32_t bufferMaxSz;
-      this->supplyBufferFunc((uint8_t) MQTT_OP::RECV, &this->buffer, &bufferMaxSz);
+      this->supplyBufferFunc(this->supplyBufferPtrBase,
+        (uint8_t) MQTT_OP::RECV, &this->buffer, &bufferMaxSz);
     #else
       uint32_t bufferMaxSz = sizeof(_buffer);
       this->buffer = _buffer;
@@ -684,7 +692,8 @@ Adafruit_MQTT_Subscribe *Adafruit_MQTT::handleSubscriptionPacket(uint32_t len) {
 void Adafruit_MQTT::flushIncoming(uint16_t timeout) {
   #if defined(EXT_MQTT_BUFFER)
     uint32_t bufferMaxSz;
-    this->supplyBufferFunc((uint8_t) MQTT_OP::RECV, &this->buffer, &bufferMaxSz);
+    this->supplyBufferFunc(this->supplyBufferPtrBase,
+      (uint8_t) MQTT_OP::RECV, &this->buffer, &bufferMaxSz);
   #else
     uint32_t bufferMaxSz = sizeof(_buffer);
     this->buffer = _buffer;
@@ -702,7 +711,8 @@ bool Adafruit_MQTT::ping(uint8_t num) {
   
   #if defined(EXT_MQTT_BUFFER)
     uint32_t bufferMaxSz;
-    this->supplyBufferFunc((uint8_t) MQTT_OP::PING, &this->buffer, &bufferMaxSz);
+    this->supplyBufferFunc(this->supplyBufferPtrBase,
+      (uint8_t) MQTT_OP::PING, &this->buffer, &bufferMaxSz);
   #else
     uint32_t bufferMaxSz = sizeof(_buffer);
     this->buffer = _buffer;

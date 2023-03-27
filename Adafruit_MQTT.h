@@ -116,8 +116,8 @@
 #define MAXBUFFERSIZE (150)
 
 #if defined(EXT_MQTT_BUFFER)
-typedef void (*supplyBufferPtr)(uint8_t operation_type, uint8_t **buffer,
-                                uint32_t *max_buffer_sz);
+typedef void (*supplyBufferPtr)(void* base, uint8_t operation_type,
+                                uint8_t **buffer, uint32_t *max_buffer_sz);
 enum class MQTT_OP : uint8_t { CONNECT = 0, DISCONNECT, PUB, RECV, SUB, UNSUB, PING };
 #endif
 
@@ -162,12 +162,14 @@ public:
                 const char *user, const char *pass
                 #if defined(EXT_MQTT_BUFFER)
                 , supplyBufferPtr supplyBufferFunc
+                , void* supplyBufferPtrBase=nullptr
                 #endif
                 );
 
   Adafruit_MQTT(const char *server, uint16_t port,
                 #if defined(EXT_MQTT_BUFFER)
                 supplyBufferPtr supplyBufferFunc,
+                void* supplyBufferPtrBase=nullptr,
                 #endif
                 const char *user = "",
                 const char *pass = "");
@@ -284,6 +286,7 @@ protected:
   uint8_t *buffer;
   #if defined(EXT_MQTT_BUFFER)
     supplyBufferPtr supplyBufferFunc;
+    void* supplyBufferPtrBase;
   #else
     uint8_t _buffer[MAXBUFFERSIZE]; // one buffer, used for all incoming/outgoing
   #endif
