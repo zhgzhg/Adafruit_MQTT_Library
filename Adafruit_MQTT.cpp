@@ -148,7 +148,7 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
 Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
                              #if defined(EXT_MQTT_BUFFER)
                              supplyBufferPtr supplyBufferFunc,
-                             void* supplyBufferPtrBase=nullptr,
+                             void* supplyBufferPtrBase,
                              #endif
                              const char *user, const char *pass) {
   servername = server;
