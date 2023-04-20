@@ -21,6 +21,14 @@
 // SOFTWARE.
 #include "Adafruit_MQTT.h"
 
+// restore the broken compatibility with arduino-esp32
+#if defined(ESP32) && ESP_ARDUINO_VERSION >= 208
+  #undef FPSTR
+  #undef F
+  #define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
+  #define F(string_literal) (FPSTR(PSTR(string_literal)))
+#endif
+
 #if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAMD_MKR1000) ||             \
     defined(ARDUINO_SAMD_MKR1010) || defined(ARDUINO_ARCH_SAMD)
 static char *dtostrf(double val, signed char width, unsigned char prec,
