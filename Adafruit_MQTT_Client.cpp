@@ -22,11 +22,13 @@
 #include "Adafruit_MQTT_Client.h"
 
 // restore the broken compatibility with arduino-esp32
-#if defined(ESP32) && ESP_ARDUINO_VERSION == ESP_ARDUINO_VERSION_VAL(2,0,8)
-  #undef FPSTR
-  #undef F
-  #define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
-  #define F(string_literal) (FPSTR(PSTR(string_literal)))
+#if defined(ESP32) && defined(ESP_ARDUINO_VERSION_VAL)
+  #if ESP_ARDUINO_VERSION == ESP_ARDUINO_VERSION_VAL(2,0,8)
+    #undef FPSTR
+    #undef F
+    #define FPSTR(pstr_pointer) (reinterpret_cast<const __FlashStringHelper *>(pstr_pointer))
+    #define F(string_literal) (FPSTR(PSTR(string_literal)))
+  #endif
 #endif
 
 bool Adafruit_MQTT_Client::connectServer() {
