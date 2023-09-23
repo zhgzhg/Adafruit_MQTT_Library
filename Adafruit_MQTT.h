@@ -113,7 +113,14 @@
 // Largest full packet we're able to send.
 // Need to be able to store at least ~90 chars for a connect packet with full
 // 23 char client ID.
+// Future TODO: This should be replaced by the ability to dynamically allocate a
+// buffer as needed.
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) ||            \
+    defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_SAMD)
+#define MAXBUFFERSIZE (512)
+#else
 #define MAXBUFFERSIZE (150)
+#endif
 
 #if defined(EXT_MQTT_BUFFER)
 typedef void (*supplyBufferPtr)(void* base, uint8_t operation_type,
@@ -137,7 +144,7 @@ enum class MQTT_OP : uint8_t { CONNECT = 0, DISCONNECT, PUB, RECV, SUB, UNSUB, P
 #define SUBSCRIPTIONDATALEN 20
 #else
 #define MAXSUBSCRIPTIONS 15
-#define SUBSCRIPTIONDATALEN 100
+#define SUBSCRIPTIONDATALEN MAXBUFFERSIZE
 #endif
 
 class AdafruitIO_MQTT; // forward decl

@@ -150,9 +150,8 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
   will_qos = 0;
   will_retain = 0;
 
+  packet_id_counter = 1; // MQTT spec forbids packet id of 0 if QOS=1
   keepAliveInterval = MQTT_CONN_KEEPALIVE;
-
-  packet_id_counter = 0;
 }
 
 Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
@@ -179,9 +178,8 @@ Adafruit_MQTT::Adafruit_MQTT(const char *server, uint16_t port,
   will_qos = 0;
   will_retain = 0;
 
+  packet_id_counter = 1; // MQTT spec forbids packet id of 0 if QOS=1
   keepAliveInterval = MQTT_CONN_KEEPALIVE;
-
-  packet_id_counter = 0;
 }
 
 int8_t Adafruit_MQTT::connect() {
@@ -439,7 +437,7 @@ bool Adafruit_MQTT::publish(const char *topic, uint8_t *data,
 
     // we increment the packet_id_counter right after publishing so inc here too
     // to match
-    packnum++;
+    packnum = packnum + 1 + (packnum + 1 == 0); // Skip zero
     if (packnum != packet_id_counter)
       return false;
   }
@@ -628,9 +626,12 @@ Adafruit_MQTT_Subscribe *Adafruit_MQTT::handleSubscriptionPacket(uint32_t len) {
   }
 
   // Parse out length of packet.
-  uint16_t const topicoffset = packetAdditionalLen(len);
+  // NOTE: This includes data in the variable header and the payload.
+  uint16_t remainingLen = len - 4; // subtract the 4 header bytes
+  uint16_t const topicoffset = packetAdditionalLen(remainingLen);
   uint16_t const topicstart = topicoffset + 4;
-  topiclen = buffer[3 + topicoffset];
+
+  topiclen = int((buffer[2 + topicoffset]) << 8 | buffer[3 + topicoffset]);
   DEBUG_PRINT(F("Looking for subscription len "));
   DEBUG_PRINTLN(topiclen);
 
@@ -894,8 +895,8 @@ uint32_t Adafruit_MQTT::publishPacket(uint8_t *packet, const char *topic,
     p[1] = packet_id_counter & 0xFF;
     p += 2;
 
-    // increment the packet id
-    packet_id_counter++;
+    // increment the packet id, skipping 0
+    packet_id_counter = packet_id_counter + 1 + (packet_id_counter + 1 == 0);
   }
 
   memmove(p, data, bLen);
@@ -920,8 +921,8 @@ uint8_t Adafruit_MQTT::subscribePacket(uint8_t *packet, const char *topic,
   p[1] = packet_id_counter & 0xFF;
   p += 2;
 
-  // increment the packet id
-  packet_id_counter++;
+  // increment the packet id, skipping 0
+  packet_id_counter = packet_id_counter + 1 + (packet_id_counter + 1 == 0);
 
   p = stringprint(p, topic);
 
@@ -949,8 +950,8 @@ uint8_t Adafruit_MQTT::unsubscribePacket(uint8_t *packet, const char *topic) {
   p[1] = packet_id_counter & 0xFF;
   p += 2;
 
-  // increment the packet id
-  packet_id_counter++;
+  // increment the packet id, skipping 0
+  packet_id_counter = packet_id_counter + 1 + (packet_id_counter + 1 == 0);
 
   p = stringprint(p, topic);
 
